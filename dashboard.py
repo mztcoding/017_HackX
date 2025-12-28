@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
-
+from pinecone import Pinecone  # The main Pinecone client
+import os
 
 def get_clear():
     clear_button=st.sidebar.button("Start new session", key="clear")
@@ -165,7 +166,7 @@ traffic_rules = [
     }
 ]
 
-def show_dashboard(client, MODEL_ID):
+def show_dashboard(client, MODEL_ID, pc_index):
 
     st.markdown("""
 <style>
@@ -219,11 +220,11 @@ def show_dashboard(client, MODEL_ID):
 
 /* "Get Started" Button Styling */
     .header-btn {
-        background: #157556 !important; /* Flat Emerald Green Base */
+        background: #ffe4e6; /* Flat Emerald Green Base */
         color: white !important;
-        font-weight: 700; 
+        font-weight: 500; 
         font-size: 1.15rem; 
-        padding: 12px 35px; 
+        padding: 6px 20px; 
         border-radius: 12px; /* Rounded Rectangle */
         border: none;
         cursor: pointer;
@@ -325,11 +326,11 @@ def show_dashboard(client, MODEL_ID):
     div.stButton { text-align: center; }
     
     div.stButton > button:first-child {
-        background: #157556 !important; /* Flat Emerald Green Base */
+        background: #ffe4e6; /* Flat Emerald Green Base */
         color: white !important;
-        font-size: 1.15rem !important; 
-        font-weight: 700 !important;
-        padding: 16px 50px !important; 
+        font-size: 1.12rem !important; 
+        font-weight: 500 !important;
+        padding: 8px 20px !important; 
         border-radius: 12px !important; /* Rounded Rectangle */
         border: none;
         box-shadow: 0 4px 10px rgba(21, 117, 86, 0.3);
@@ -475,10 +476,9 @@ def show_dashboard(client, MODEL_ID):
     if "chat_history" not in st.session_state:
         # We start with a system instruction to set the AI's persona
         st.session_state.chat_history = [
-            {"role": "user", "parts": [{"text": "Always give response in urdu. You are a specialized Pakistani Traffic Law expert. Answer only based on the Motor Vehicle Ordinance 1965."}]},
-            {"role": "model", "parts": [{"text": "Understood. I am ready to provide legal guidance on Pakistani traffic laws."}]}
+            {"role": "user", "parts": [{"text": "If someone greets you greet him/her politely and tell him/her that you can help him regarding Traffic laws. Ask them to explain their situation that whether they are asking generally for laws or a warden has stopped them and is going to press charges on them. So ask them to explain their situation if they have been stopped by the warden. After hearing their situation analyze it and compare it to the pakistan ordinaces and laws of traffic and check whether the behvaiour of the warden is legal and justified or not."}]},
+            {"role": "model", "parts": [{"text": "You are a specialized Pakistani Traffic Law expert.Act like a lwayer ok. Provide profrssional legal arguments to talk with the warden. But don't give a too big of a response. Be to the point and concise. Refer ordinances and specific sections where required.Be professional. Use professional English, don't use urdu words"}]}
         ]
-
     # 2. Navigation
     default_idx = st.session_state.get('nav_target', 0)
     st.markdown("""
@@ -491,7 +491,7 @@ def show_dashboard(client, MODEL_ID):
             background: linear-gradient(180deg, #ffffff 0%, #fffef0 100%) !important;
         }
 
-        /* --- FORCE BLACK TEXT FOR ALL PAGES (AI Lawyer, Validator, Route) --- */
+        /* --- FORCE BLACK TEXT FOR ALL PAGES (AI Lawyer, Challan Analyzer, Route) --- */
         h1, h2, h3, h4, h5, h6, p, .stMarkdown, .stText, label, div[data-testid="stMetricValue"] {
             color: #000000 !important;
         }
@@ -559,15 +559,15 @@ def show_dashboard(client, MODEL_ID):
         # Navigation Menu
         selected_page = option_menu(
             menu_title="Main Menu",
-            options=["Traffic Guide", "AI Lawyer", "Validator", "Route Guide"],
+            options=["Traffic Guide", "AI Lawyer", "Challan Analyzer", "Route Guide"],
             icons=['grid', 'chat-dots', 'shield-check', 'map'], 
             menu_icon="cast", 
             default_index=default_idx,
             styles={
                 "container": {"padding": "0!important", "background-color": "transparent"},
-                "icon": {"color": "#004d00", "font-size": "16px"}, 
-                "nav-link": {"font-size": "15px", "text-align": "left", "margin":"5px", "--hover-color": "#fffde7"},
-                "nav-link-selected": {"background-color": "#006400", "color": "white"},
+                "icon": {"color": "#000", "font-size": "16px"}, 
+                "nav-link": {"font-size": "15px", "font-weight": "500", "text-align": "left", "margin":"5px", "--hover-color": "#fffde7"},
+                "nav-link-selected": {"background-color": "#4da64d", "color": "white"},
             }
         )
         
@@ -581,7 +581,7 @@ def show_dashboard(client, MODEL_ID):
         
         # --- CENTERED HOME BUTTON ---
         # We use 3 columns: Left spacer, Button (Middle), Right spacer
-        c1, c2, c3 = st.columns([0.08, 1, 0.08]) 
+        c1, c2, c3 = st.columns([0.05, 1, 0.1]) 
         
         with c2:
             if st.button("⬅ Home"):
@@ -593,40 +593,47 @@ def show_dashboard(client, MODEL_ID):
     if selected_page == "Traffic Guide":
         st.markdown('<div class="welcome-header">Rule Explorer 📚</div>', unsafe_allow_html=True)
         st.markdown('<div class="welcome-sub">Click on any rule card to reveal detailed legal info and fines.</div>', unsafe_allow_html=True)
-
-        # 1. Search Logic
+        # 2. Search Logic
         if "search_bar" not in st.session_state: st.session_state.search_bar = ""
         
         col_search, col_reset = st.columns([4, 1])
         with col_search:
             query = st.text_input("Search rules...", key="search_bar").lower()
+        
         with col_reset:
-            st.write(" ") # Spacer
-            st.button("Show All", on_click=lambda: st.session_state.update(search_bar=""), use_container_width=True)
+            # Better alignment hack for the button
+            st.markdown('<div style="margin-top:28px;"></div>', unsafe_allow_html=True)
+            st.button(
+                "Show All", 
+                key="reset_btn",  # This key matches the CSS above
+                on_click=lambda: st.session_state.update(search_bar=""), 
+                use_container_width=True
+            )
 
+        # 3. Filter and Grid Rendering
         filtered = [r for r in traffic_rules if query in r['title'].lower() or query in r['desc'].lower()]
 
-        # 2. Grid with Interactive Expanders
-        for i in range(0, len(filtered), 2):
-            cols = st.columns(2)
-            for j in range(2):
-                if i + j < len(filtered):
-                    rule = filtered[i + j]
-                    with cols[j]:
-                        # The Expander acts as the 'Clickable Card'
-                        with st.expander(f"{rule['icon']} {rule['title']}", expanded=False):
-                            st.markdown(f"### {rule['title']}")
-                            st.write(f"_{rule['desc']}_")
-                            st.info(f"⚖️ **Legal Detail:** {rule['long_desc']}")
-                            
-                            # Fine Comparison Table
-                            st.markdown(f"""
-                            | Vehicle Type | Fine Amount |
-                            | :--- | :--- |
-                            | 🏍️ Motorcycle | {rule['bike_fine']} PKR |
-                            | 🚗 Car / SUV | {rule['car_fine']} PKR |
-                            """)
-            
+        if not filtered:
+            st.info("No matching rules found. Try a different keyword.")
+        else:
+            for i in range(0, len(filtered), 2):
+                cols = st.columns(2)
+                for j in range(2):
+                    if i + j < len(filtered):
+                        rule = filtered[i + j]
+                        with cols[j]:
+                            with st.expander(f"{rule['icon']} {rule['title']}", expanded=False):
+                                st.markdown(f"### {rule['title']}")
+                                st.write(f"_{rule['desc']}_")
+                                st.info(f"⚖️ **Legal Detail:** {rule['long_desc']}")
+                                
+                                st.markdown(f"""
+                                | Vehicle Type | Fine Amount |
+                                | :--- | :--- |
+                                | 🏍️ Motorcycle | {rule['bike_fine']} PKR |
+                                | 🚗 Car / SUV | {rule['car_fine']} PKR |
+                                """)
+
         # --- OTHER PAGES ---
     elif selected_page == "AI Lawyer":
         # Create columns for the top layout
@@ -672,26 +679,70 @@ def show_dashboard(client, MODEL_ID):
                 """, unsafe_allow_html=True)
 
         # Chat Input - Placed globally at the bottom
-        if prompt := st.chat_input("Ask a follow-up question..."):
-            # 1. Update UI and State
-            st.session_state.chat_history.append({"role": "user", "parts": [{"text": prompt}]})
+        
+        if prompt := st.chat_input("Ask about traffic laws..."):
             
-            # 2. Logic for generating response
-            try:
+            # 1. Show the user's message immediately
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            # 2. PLACE THE CODE HERE: Convert question to vector
+            with st.spinner("Searching legal database..."):
+                result = client.models.embed_content(
+                    model="text-embedding-004",
+                    contents=prompt  # The line we fixed
+                )
+                query_vector = result.embeddings[0].values
+
+                # 3. Use that vector to query Pinecone
+                query_response = pc_index.query(
+                    vector=query_vector,
+                    top_k=3,
+                    include_metadata=True
+                )
+
+                # 4. Extract text from your PDF chunks (metadata)
+                context_text = ""
+                for match in query_response['matches']:
+                    if 'text' in match['metadata']:
+                        context_text += f"\n---\n{match['metadata']['text']}"
+
+            # 5. Send the prompt + PDF context to Gemini
+            with st.chat_message("assistant"):
+                rag_prompt = f"You are a specialized Pakistani Traffic Law expert.Act like a lwayer ok. Provide profrssional legal arguments to talk with the warden. Make sure to mention the prices of the fine. Also bold important text and also make relevant headings. But don't give a too big of a response. Be to the point and concise. Refer ordinances and specific sections where required.Be professional. Use professional English, don't use urdu words. If someone greets you greet him/her politely and tell him/her that you can help him regarding Traffic laws. Ask them to explain their situation that whether they are asking generally for laws or a warden has stopped them and is going to press charges on them. So ask them to explain their situation if they have been stopped by the warden. After hearing their situation analyze it and compare it to the pakistan ordinaces and laws of traffic and check whether the behvaiour of the warden is legal and justified or not. Use this context to answer: {context_text}\n\nQuestion: {prompt}"
+                
                 response = client.models.generate_content(
                     model=MODEL_ID,
-                    contents=st.session_state.chat_history
+                    contents=rag_prompt
                 )
-                ai_response = response.text
-                st.session_state.chat_history.append({"role": "model", "parts": [{"text": ai_response}]})
+                st.markdown(response.text)
                 
-                # Rerun to display the new messages in the history loop above
-                st.rerun()
-            except Exception as e:
-                st.error(f"Lawyer is busy: {e}")
+                # Update history
+                st.session_state.chat_history.append({"role": "user", "parts": [{"text": prompt}]})
+                st.session_state.chat_history.append({"role": "model", "parts": [{"text": response.text}]})
 
-    elif selected_page == "Validator":
-        st.header("✅ Challan Validator")
+            st.rerun()
+                    
+        # if prompt := st.chat_input("Ask a follow-up question..."):
+        #     # 1. Update UI and State
+        #     st.session_state.chat_history.append({"role": "user", "parts": [{"text": prompt}]})
+            
+        #     # 2. Logic for generating response
+        #     try:
+        #         response = client.models.generate_content(
+        #             model=MODEL_ID,
+        #             contents=st.session_state.chat_history
+        #         )
+        #         ai_response = response.text
+        #         st.session_state.chat_history.append({"role": "model", "parts": [{"text": ai_response}]})
+                
+        #         # Rerun to display the new messages in the history loop above
+        #         st.rerun()
+        #     except Exception as e:
+        #         st.error(f"Lawyer is busy: {e}")
+
+    elif selected_page == "Challan Analyzer":
+        st.header("✅ Challan Challan Analyzer")
         st.write("Upload a photo of your traffic ticket to verify its details and legitimacy.")
 
         # 1. File Uploader
@@ -716,7 +767,9 @@ def show_dashboard(client, MODEL_ID):
                                 "Extract the following from this Pakistani traffic challan: "
                                 "1. Violation Name, 2. Fine Amount, 3. Date, 4. Vehicle Number. "
                                 "Then, verify if the fine amount matches the standard Motor Vehicle Ordinance rules. "
-                                "Explain if there are any discrepancies.",
+                                "Explain if there are any discrepancies."
+                                "Don't give extended details, provide the neccessary information told above"
+                                "Compare the given data with the ordinances and laws and fines and tell whether the fines are justified",
                                 {"inline_data": {"data": image_bytes, "mime_type": "image/jpeg"}}
                             ]
                         )

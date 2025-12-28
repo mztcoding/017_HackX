@@ -33,6 +33,7 @@ def show_home():
     }
     
     .header-logo {
+        font-family: 'Poppins', sans-serif;
         font-size: 1.5rem; font-weight: 800; color: #000000;
         letter-spacing: -1px; cursor: pointer;
     }
@@ -110,7 +111,12 @@ def show_home():
             }
         }
 
-        .ai-badge-container { display: flex; justify-content: center; margin-bottom: 20px; }
+        .ai-badge-container {
+                display: flex;
+                justify-content: center;
+                margin-top: 30px;
+                margin-bottom: 50px;
+                }
         
         .ai-badge {
                 padding: 10px 25px; /* Slightly more padding for larger text */
@@ -126,8 +132,8 @@ def show_home():
 
     /* 3. MAIN HERO TITLE */
         .hero-title-main {
-            font-size: 3rem; 
-            font-weight: 800; 
+            font-size: 2.8rem; 
+            font-weight: 700; 
             color: #000000; /* Pure Black */
             text-align: center;
             line-height: 1.2; 
@@ -345,7 +351,7 @@ def show_home():
             <div class="nav-links">
                 <a href="?page=main&nav=0" target="_self" class="nav-item">Traffic Rules</a>
                 <a href="?page=main&nav=1" target="_self" class="nav-item">AI Lawyer</a>
-                <a href="?page=main&nav=2" target="_self" class="nav-item">Validate Challan</a>
+                <a href="?page=main&nav=2" target="_self" class="nav-item">Analyze Challan</a>
                 <a href="?page=main&nav=3" target="_self" class="nav-item">Know Your Route</a>
             </div>
             <a href="?page=main&nav=0" target="_self" style="text-decoration: none;">
@@ -377,7 +383,7 @@ def show_home():
 
     c1, c2, c3 = st.columns([1, 0.5, 1]) 
     with c2:
-        if st.button("🚀 Launch AI Assistant", use_container_width=True):
+        if st.button("Launch AI Assistant", use_container_width=True):
             st.session_state['current_view'] = 'main_app'
             st.rerun()
 
@@ -426,7 +432,7 @@ def show_home():
             </a>
             <a href="?page=main&nav=2" target="_self" class="feature-card">
                 <span class="feature-icon">✅</span>
-                <h3 class="feature-title">Challan Validator</h3>
+                <h3 class="feature-title">Challan Challan Analyzer</h3>
                 <p class="feature-desc">Instantly verify if your traffic challan is legitimate and issued correctly.</p>
             </a>
             <a href="?page=main&nav=3" target="_self" class="feature-card">
@@ -582,11 +588,3 @@ def show_home():
             </div>
     </div>
     """, unsafe_allow_html=True)
-
-
-    
-    # _, col2, _ = st.columns([1, 1, 1])
-    # with col2:
-    #     if st.button("🚀 Launch AI Assistant", use_container_width=True):
-    #         st.session_state['current_view'] = 'main_app'
-    #         st.rerun()
