@@ -12,3 +12,4 @@ google
 pinecone
 openai
 streamlit_option_menu
+pillow
