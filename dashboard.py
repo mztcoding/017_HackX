@@ -53,6 +53,36 @@ def reset_search():
 # </div>
 # """
 
+system_instruction = (
+    "ROLE: You are the 'Mera Challan' AI Legal Expert, specialized in the Pakistan's Traffic Rules. "
+    "Your tone is professional, authoritative, and helpful. Use formal English only (no Urdu words).\n\n"
+    
+    "REAL-TIME VERIFICATION RULE:\n"
+    "- You must cross-check every legal citation and fine amount with live internet data.\n"
+    "- CRITICAL: If the provided PDF context (legal database) conflicts with current 2025 internet data (e.g., updated fine amounts or new amendments), ALWAYS prioritize the internet data.\n"
+    "- Explicitly state if you are using an updated internet reference and provide the source/website name where possible.\n\n"
+
+    "PHASE 1: INITIAL ASSESSMENT\n"
+    "- If greeted, respond politely and state your expertise.\n"
+    "- MANDATORY: You must first determine if the user is asking a GENERAL law question or if they are CURRENTLY stopped by a warden.\n"
+    "- Ask the user to describe the specific incident, the alleged violation, and the warden's conduct.\n\n"
+    
+    "PHASE 2: LEGAL ANALYSIS & ARGUMENT\n"
+    "- Once the situation is clear, cross-reference it with the legal context provided AND live data.\n"
+    "- State clearly if the warden's actions are 'Legally Justified' or 'Unlawful/Procedurally Flawed'.\n"
+    "- Provide specific 'Defense Arguments' the user can present to the warden politely but firmly.\n\n"
+    
+    "PHASE 3: CITATION & FINES\n"
+    "- Always cite specific Sections (e.g., Section 116-A) of the Motor Vehicle Ordinance.\n"
+    "- List the exact fine amount in PKR. Ensure this is the most current 2025 rate.\n\n"
+    
+    "FORMATTING RULES:\n"
+    "- Use **bold text** for legal sections and fine amounts.\n"
+    "- Use ### Headings for structure.\n"
+    "- Keep responses concise. Do not exceed 3 short paragraphs per response."
+)
+
+
 traffic_rules = [
     {
         "id": 1, "title": "Speed Limit Violation", "icon": "🛑", "bike_fine": "2,000", "car_fine": "2,500",
@@ -572,8 +602,8 @@ def show_dashboard(client, MODEL_ID, pc_index):
         )
         
         # Clear the nav_target so if they refresh, it doesn't get stuck
-        if 'nav_target' in st.session_state:
-            del st.session_state['nav_target']
+        # if 'nav_target' in st.session_state:
+        #     del st.session_state['nav_target']
             
         # ... (Rest of sidebar code) ...
         
@@ -681,47 +711,57 @@ def show_dashboard(client, MODEL_ID, pc_index):
         # Chat Input - Placed globally at the bottom
         
         if prompt := st.chat_input("Ask about traffic laws..."):
-            
-            # 1. Show the user's message immediately
+    
+            # 1. Show user message
             with st.chat_message("user"):
                 st.markdown(prompt)
 
-            # 2. PLACE THE CODE HERE: Convert question to vector
-            with st.spinner("Searching legal database..."):
-                result = client.models.embed_content(
-                    model="text-embedding-004",
-                    contents=prompt  # The line we fixed
-                )
-                query_vector = result.embeddings[0].values
+            # --- START OF ERROR HANDLING ---
+            try:
+                with st.spinner("Searching legal database..."):
+                    # A. Embedding
+                    result = client.models.embed_content(
+                        model="text-embedding-004",
+                        contents=prompt
+                    )
+                    query_vector = result.embeddings[0].values
 
-                # 3. Use that vector to query Pinecone
-                query_response = pc_index.query(
-                    vector=query_vector,
-                    top_k=3,
-                    include_metadata=True
-                )
+                    # B. Pinecone Search
+                    query_response = pc_index.query(
+                        vector=query_vector,
+                        top_k=3,
+                        include_metadata=True
+                    )
 
-                # 4. Extract text from your PDF chunks (metadata)
-                context_text = ""
-                for match in query_response['matches']:
-                    if 'text' in match['metadata']:
-                        context_text += f"\n---\n{match['metadata']['text']}"
+                    # C. Context Extraction
+                    context_text = ""
+                    for match in query_response['matches']:
+                        if 'text' in match['metadata']:
+                            context_text += f"\n---\n{match['metadata']['text']}"
 
-            # 5. Send the prompt + PDF context to Gemini
-            with st.chat_message("assistant"):
-                rag_prompt = f"You are a specialized Pakistani Traffic Law expert.Act like a lwayer ok. Provide profrssional legal arguments to talk with the warden. Make sure to mention the prices of the fine. Also bold important text and also make relevant headings. But don't give a too big of a response. Be to the point and concise. Refer ordinances and specific sections where required.Be professional. Use professional English, don't use urdu words. If someone greets you greet him/her politely and tell him/her that you can help him regarding Traffic laws. Ask them to explain their situation that whether they are asking generally for laws or a warden has stopped them and is going to press charges on them. So ask them to explain their situation if they have been stopped by the warden. After hearing their situation analyze it and compare it to the pakistan ordinaces and laws of traffic and check whether the behvaiour of the warden is legal and justified or not. Use this context to answer: {context_text}\n\nQuestion: {prompt}"
-                
-                response = client.models.generate_content(
-                    model=MODEL_ID,
-                    contents=rag_prompt
-                )
-                st.markdown(response.text)
-                
-                # Update history
-                st.session_state.chat_history.append({"role": "user", "parts": [{"text": prompt}]})
-                st.session_state.chat_history.append({"role": "model", "parts": [{"text": response.text}]})
+                # D. Gemini Generation
+                with st.chat_message("assistant"):
+                    rag_prompt = f"Use this legal context: {context_text}\n\nUser Question: {prompt}"
+                    full_chat_payload = st.session_state.chat_history + [{"role": "user", "parts": [{"text": rag_prompt}]}]
 
-            st.rerun()
+                    response = client.models.generate_content(
+                        model=MODEL_ID,
+                        contents=full_chat_payload,
+                        config={'system_instruction': system_instruction}
+                    )
+                    
+                    st.markdown(response.text)
+
+                    # E. Update history
+                    st.session_state.chat_history.append({"role": "user", "parts": [{"text": prompt}]})
+                    st.session_state.chat_history.append({"role": "model", "parts": [{"text": response.text}]})
+
+                st.rerun()
+
+            except Exception as e:
+                # This catches any error from any of the steps above
+                st.info("AI Lawyer is currently not available. Please try again after few minutes.")
+            # --- END OF ERROR HANDLING ---
                     
         # if prompt := st.chat_input("Ask a follow-up question..."):
         #     # 1. Update UI and State
@@ -739,10 +779,10 @@ def show_dashboard(client, MODEL_ID, pc_index):
         #         # Rerun to display the new messages in the history loop above
         #         st.rerun()
         #     except Exception as e:
-        #         st.error(f"Lawyer is busy: {e}")
+        #         st.info(f"Lawyer is busy: {e}")
 
     elif selected_page == "Challan Analyzer":
-        st.header("✅ Challan Challan Analyzer")
+        st.header("✅ Challan Analyzer")
         st.write("Upload a photo of your traffic ticket to verify its details and legitimacy.")
 
         # 1. File Uploader
@@ -780,7 +820,7 @@ def show_dashboard(client, MODEL_ID, pc_index):
                         st.write(response.text)
 
                     except Exception as e:
-                        st.error(f"An error occurred during analysis: {e}")
+                        st.info(f"An error occurred during analysis. Please try again after few minutes.")
         else:
             st.info("Please upload an image file (JPG/PNG) to begin.")    
 
@@ -813,22 +853,46 @@ def show_dashboard(client, MODEL_ID, pc_index):
                     try:
                         # Constructing a detailed prompt for the Form data
                         route_prompt = f"""
-                        Act as a Pakistani Traffic Law Expert. 
-                        Provide a 'Safe Journey Guide' for the following trip:
-                        - Route: From {start_point} to {destination}
-                        - Vehicle: {vehicle_type}
-                        - Time: {travel_time}
-                        - User Notes: {additional_details}
+                        Act as a Pakistani Traffic Law Expert. Your goal is to provide a visually organized, professional 'Safe Journey Guide'.
+                        Use Markdown tables, bold headers, and clean bullet points to ensure the user can read this on the go.
 
-                        Please structure your response with these headers:
-                        ### 🚦 Route Jurisdictions
-                        (Mention if they will encounter City Traffic Police, Cantt Board, or Motorway Police)
-                        
-                        ### ⚖️ Area-Specific Laws
-                        (Highlight specific rules like helmet requirements, lane restrictions for bikes, or one-way zones common on this route)
-                        
-                        ### 🛡️ Legal Protection Tips
-                        (Give 3-4 bullet points on what to do if stopped by an officer on this specific path)
+                        ### 📋 TRIP OVERVIEW
+                        | Feature | Details |
+                        | :--- | :--- |
+                        | **📍 Route** | {start_point} to {destination} |
+                        | **🚗 Vehicle** | {vehicle_type} |
+                        | **⏰ Time** | {travel_time} |
+                        | **📝 Notes** | {additional_details} |
+
+                        ---
+
+                        ### 🚦 ROUTE JURISDICTIONS
+                        *Determine which authorities govern this path (e.g., Lahore City Traffic Police (CTP), National Highways & Motorway Police (NHMP), or Cantonment Boards).*
+                        **Jurisdiction Analysis:** [Provide details here]
+
+                        ---
+
+                        ### ⚖️ AREA-SPECIFIC LAWS & FINES
+                        *Use a table to highlight the most important rules for {vehicle_type} on this specific route.*
+
+                        | Rule Category | Requirement | Potential Fine (2025 Rates) |
+                        | :--- | :--- | :--- |
+                        | **Lane Discipline** | [Detail lane for {vehicle_type}] | [Mention PKR amount] |
+                        | **Speed Limits** | [Max speed for this route] | [Mention PKR amount] |
+                        | **Safety Gear** | [Helmet/Seatbelt requirement] | [Mention PKR amount] |
+
+                        ---
+
+                        ### 🛡️ LEGAL PROTECTION TIPS
+                        *Provide 3-4 actionable tips specifically for a {vehicle_type} driver traveling from {start_point} to {destination}.*
+                        - 💡 **Tip 1:** [Advice on documents to carry]
+                        - 💡 **Tip 2:** [Advice on interacting with Wardens in this specific area]
+                        - 💡 **Tip 3:** [Technical/Legal loophole or right the user should know]
+
+                        ---
+
+                        **FINAL ADVICE:**
+                        > Provide a concise, encouraging closing statement for a safe trip.
                         """
 
                         response = client.models.generate_content(
@@ -842,7 +906,7 @@ def show_dashboard(client, MODEL_ID, pc_index):
                         st.markdown(response.text)
                         
                     except Exception as e:
-                        st.error(f"Could not generate guide: {e}")
+                        st.info(f"Route Guide is currently not available right now, please try again after few minutes.")
 
         # Static Tips Section (Always visible at the bottom)
         st.markdown("---")

@@ -1,6 +1,9 @@
 import streamlit as st
 
 def show_home():
+
+    LOGO_PATH = "/app/static/images/mylogo.png"
+
     # --- CSS for Home Only (Shows Header) ---
     st.markdown("""
 <style>
@@ -23,18 +26,17 @@ def show_home():
     .fixed-header {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 90px; /* Slightly taller to accommodate larger text */
-        background: rgba(255, 255, 255, 0.9);
+        background: linear-gradient(180deg, #f4fcf6 0%, #e8f5eb 100%);
         backdrop-filter: blur(10px);
         z-index: 99999;
         display: flex; justify-content: space-between; align-items: center;
         padding: 0 50px;
-        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
     
     .header-logo {
-        font-family: 'Poppins', sans-serif;
-        font-size: 1.5rem; font-weight: 800; color: #000000;
+        font-size: 1.5rem; font-weight: 700; color: #004d00;
         letter-spacing: -1px; cursor: pointer;
     }
 
@@ -75,9 +77,23 @@ def show_home():
         color: white;
     }
 
+    
+    /* Sidebar Link Styling (to match your theme) */
+    .sidebar-nav-item {
+        display: block;
+        padding: 15px;
+        text-decoration: none;
+        color: #31333F;
+        border-bottom: 1px solid #f0f2f6;
+        font-size: 1.1rem;
+    }
+
     /* 1. HUGE LOGO TITLE */
     .hero-logo {
-        font-size: 5rem; font-weight: 800; color: #004d00; text-align: center;
+        font-size: 5rem;
+        font-weight: 700;
+        color: #004d00;
+        text-align: center;
         letter-spacing: -2px; line-height: 1.1; margin-top: -20px; margin-bottom: 20px;
     }
 
@@ -305,61 +321,74 @@ def show_home():
         font-weight: 700;
         color: #000;
     }
+                
+    @media (max-width: 640px) {
+        /* Hide your custom top header */
+        .fixed-header {
+            display: none !important;
+        }
+        
+        /* Show the Streamlit Sidebar (Hamburger Menu) */
+        [data-testid="stSidebar"] {
+            display: block !important;
+        }
+                
+        .hero-logo {
+        font-size: 3.2rem;
+        font-weight: 700;
+        margin-top: -40px; margin-bottom: 20px;
+    }
+
+        .ai-badge-container {
+                margin-top: 30px;
+                margin-bottom: 30px;
+            }
+        
+        .ai-badge {
+                padding: 10px 15px; /* Slightly more padding for larger text */
+                font-weight: 600; 
+                font-size: 1rem; /* Increased from 1rem */
+                animation: trafficLightCycle 8s infinite; 
+            }
+
+    /* 3. MAIN HERO TITLE */
+        .hero-title-main {
+            width: 80vw;
+            margin: auto;
+            text-align: center;
+            font-size: 1.3rem; 
+            font-weight: 700;
+            margin-top: 30px; 
+            margin-bottom: 30px;
+        }
+
+    /* 4. SUBTITLE */
+        .hero-subtitle {
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+    }
     
     
     
 </style>
 """, unsafe_allow_html=True)
-
-    # st.markdown("""
-    # <style>
-    #     .fixed-header {
-    #         position: fixed;
-    #         top: 0; left: 0; width: 100%; height: 70px;
-    #         background: white; z-index: 999;
-    #         display: flex; justify-content: space-between; align-items: center;
-    #         padding: 0 5%; border-bottom: 1px solid #eee;
-    #     }
-    #     .nav-item { margin: 0 15px; text-decoration: none; color: black; font-weight: 500; }
-    # </style>
     
-    # <div class="fixed-header">
-    #     <div style="font-weight:800; font-size:1.2rem;">Mera Challan 🇵🇰</div>
-    #     <div class="nav-links">
-    #         <a href="?page=main&nav=0" target="_self" class="nav-item">Rules</a>
-    #         <a href="?page=main&nav=1" target="_self" class="nav-item">AI Lawyer</a>
-    #     </div>
-    #     <a href="?page=main&nav=0" target="_self">
-    #         <button style="background:#157556; color:white; border:none; padding:8px 20px; border-radius:8px; cursor:pointer;">
-    #             Get Started
-    #         </button>
-    #     </a>
-    # </div>
-    # <div style="margin-top:100px;"></div>
-    # """, unsafe_allow_html=True)
-
-    # # --- Hero Section ---
-    # st.markdown("<h1 style='text-align: center;'>Traffic Awareness & Legal Assistance</h1>", unsafe_allow_html=True)
-    
-    # Corrected "Launch" Button Link logic
-    
-
-    # --- ADD FIXED HEADER ---
     st.markdown("""
-        <div class="fixed-header">
-            <div class="header-logo">Mera Challan 🇵🇰</div>
-            <div class="nav-links">
-                <a href="?page=main&nav=0" target="_self" class="nav-item">Traffic Rules</a>
-                <a href="?page=main&nav=1" target="_self" class="nav-item">AI Lawyer</a>
-                <a href="?page=main&nav=2" target="_self" class="nav-item">Analyze Challan</a>
-                <a href="?page=main&nav=3" target="_self" class="nav-item">Know Your Route</a>
-            </div>
-            <a href="?page=main&nav=0" target="_self" style="text-decoration: none;">
-                <button class="header-btn">Get Started</button>
-            </a>
+    <div class="fixed-header">
+        <div class="header-logo">MeraChallan</div>
+        <div class="nav-links">
+            <a href="?page=main&nav=0" target="_self" class="nav-item">Traffic Rules</a>
+            <a href="?page=main&nav=1" target="_self" class="nav-item">AI Lawyer</a>
+            <a href="?page=main&nav=2" target="_self" class="nav-item">Analyze Challan</a>
+            <a href="?page=main&nav=3" target="_self" class="nav-item">Know Your Route</a>
         </div>
+        <a href="?page=main&nav=0" target="_self" style="text-decoration: none;">
+            <button class="header-btn">Get Started</button>
+        </a>
+    </div>
     """, unsafe_allow_html=True)
-    
+
     st.write("") 
     st.markdown('<div class="hero-logo">Mera Challan</div>', unsafe_allow_html=True)
     st.markdown("""
@@ -369,11 +398,7 @@ def show_home():
             </div>
         </div>
     """, unsafe_allow_html=True)
-    # 3. MAIN HERO TITLE (UPDATED COLORS & WIDTH)
-    # Removing <br> makes it wider. 
-    # Using <span> tags to color specific words.
-    # 3. MAIN HERO TITLE (UPDATED DARKER COLORS)
-    # Updated Hero Title - Clean Black with Shadow
+    
     st.markdown("""
         <div class="hero-title-main">
             Traffic Awareness, Clarity & Legal Assistance
@@ -480,111 +505,89 @@ def show_home():
     """, unsafe_allow_html=True)
     
 # --- PRO FOOTER SECTION ---
+# --- PRO FOOTER SECTION ---
     st.markdown("""
-    <style>
-        /* Footer Specific Styles */
-        .main-footer {
-            background-color: #0a1f18; /* Dark Green */
-            color: #ffffff;
-            padding: 100px 40px 60px 40px;
-            font-family: 'Poppins', sans-serif;
-            margin-top: 50px;
-            margin-left: -6rem; /* Break out of Streamlit container margins */
-            margin-right: -5rem;
-            margin-bottom: -15rem;
-        }
-        
-        .footer-content {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            max-width: 1200px;
-            margin: 0 auto;
-            gap: 40px;
-            border-bottom: 1px solid #1c3d32;
-            padding-bottom: 40px;
-        }
-        
-        .footer-col {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .footer-brand h3 {
-            color: #ffffff !important;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        
-        .footer-brand p {
-            color: #8fa69d !important;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-        
-        .contact-info div {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #d1e0db;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-        
-        .footer-col h4 {
-            color: #ffffff !important;
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 25px;
-        }
-        
-        .footer-links ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .footer-links li {
-            color: #8fa69d;
-            font-size: 0.95rem;
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        
-        .footer-links li:hover {
-            color: #ffffff;
-            transform: translateX(5px);
-        }
-        
-        .footer-bottom {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding-top: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            color: #5c7c70;
-            font-size: 0.85rem;
-        }
-        
-        .footer-bottom span { color: #5c7c70; }
-        
-    </style>
+        <style>
+            .main-footer {
+                background-color: #0a1f18;
+                color: #ffffff;
+                font-family: 'Poppins', sans-serif;
+                margin-top: 80px;
+                padding: 60px 20px 40px 20px;
+                
+                /* The Full-Width Reset */
+                width: 100vw;
+                position: relative;
+                left: 50%;
+                right: 50%;
+                margin-left: -50vw;
+                margin-right: -50vw;
+                
+                /* Force overlap of the bottom padding */
+                margin-bottom: -10rem !important; 
+            }
+            
+            @media (min-width: 768px) {
+                .main-footer { padding: 80px 40px 60px 40px; }
+            }
 
-    <div class="main-footer">
-        <div class="footer-content">
-            <div class="footer-col footer-brand">
-                <h3>Mera Challan</h3>
-                <p>Empowering Pakistani citizens with traffic law knowledge and protection against unlawful fines.</p>
-                <div class="contact-info">
-                    <div>✉️ support@merachallan.pk</div>
-                    <div>📞 +92 300 1234567</div>
+            .footer-content {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                max-width: 1200px;
+                margin: 0 auto;
+                gap: 30px;
+                border-bottom: 1px solid #1c3d32;
+                padding-bottom: 40px;
+            }
+
+            .footer-col { flex: 1; min-width: 250px; }
+            .footer-brand h3 { color: white !important; display: flex; align-items: center; gap: 10px; font-size: 1.5rem;}
+            .footer-brand p { color: #8fa69d !important; font-size: 0.95rem; }
+            
+            .contact-info div {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                color: #d1e0db;
+                margin-bottom: 10px;
+            }
+
+            .footer-bottom {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding-top: 25px;
+                display: flex;
+                justify-content: space-between;
+                color: #5c7c70;
+                font-size: 0.85rem;
+            }
+
+            @media (max-width: 767px) {
+                .footer-content, .footer-bottom { 
+                    flex-direction: column; 
+                    text-align: center; 
+                    gap: 20px;
+                }
+                .footer-brand h3, .contact-info div { justify-content: center; }
+            }
+        </style>
+
+        <div class="main-footer">
+            <div class="footer-content">
+                <div class="footer-col footer-brand">
+                    <h3>Mera Challan 🇵🇰</h3>
+                    <p>Empowering Pakistani citizens with traffic law knowledge and protection against unlawful fines.</p>
+                    <div class="contact-info">
+                        <div>✉️ support@merachallan.pk</div>
+                        <div>📞 +92 300 1234567</div>
+                    </div>
                 </div>
             </div>
-    </div>
-    """, unsafe_allow_html=True)
+            <div class="footer-bottom">
+                <span>© 2025 Mera Challan. All rights reserved.</span>
+                <span>Made with ❤️ in Pakistan</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
