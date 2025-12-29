@@ -666,18 +666,45 @@ def show_dashboard(client, MODEL_ID, pc_index):
 
         # --- OTHER PAGES ---
     elif selected_page == "AI Lawyer":
-        # Create columns for the top layout
+        # --- 1. THE INJECTED CSS (FORCED OVERRIDE) ---
+        st.markdown("""
+            <style>
+                /* We target the HorizontalBlock which is the parent of stColumn.
+                By using column-reverse, we move the SECOND column (Guide) 
+                to the TOP on mobile devices.
+                */
+                @media screen and (max-width: 768px) {
+                    /* Target the main container of the columns */
+                    div[data-testid="stHorizontalBlock"] {
+                        display: flex !important;
+                        flex-direction: column-reverse !important;
+                    }
+                    
+                    /* Force each column to take 100% width so they stack properly */
+                    div[data-testid="stColumn"] {
+                        width: 100% !important;
+                        flex: 1 1 auto !important;
+                    }
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # --- 2. THE PAGE LAYOUT ---
+        # Keep the Title outside columns so it stays at the very top
+        
+        # Layout: 70% Chat, 30% Guide (Desktop view)
         col_chat, col_guide = st.columns([0.7, 0.3])
 
+        # This column is FIRST in code, so it will be BOTTOM on mobile
         with col_chat:
-            st.title("⚖️ Conversational AI Lawyer")
-            
-            # Message history display
+            st.header("⚖️ Conversational AI Lawyer")
+            # Display chat history (skipping internal setup messages)
             for message in st.session_state.chat_history[2:]:
                 role = "user" if message["role"] == "user" else "assistant"
                 with st.chat_message(role):
                     st.markdown(message["parts"][0]["text"])
 
+        # This column is SECOND in code, so it will be TOP on mobile
         with col_guide:
             # 1. The Main Point (Visible)
             st.markdown("""
@@ -707,6 +734,48 @@ def show_dashboard(client, MODEL_ID, pc_index):
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+    # elif selected_page == "AI Lawyer":
+    #     # Create columns for the top layout
+    #     col_chat, col_guide = st.columns([0.7, 0.3])
+
+    #     with col_chat:
+    #         st.title("⚖️ Conversational AI Lawyer")
+            
+    #         # Message history display
+    #         for message in st.session_state.chat_history[2:]:
+    #             role = "user" if message["role"] == "user" else "assistant"
+    #             with st.chat_message(role):
+    #                 st.markdown(message["parts"][0]["text"])
+
+        # with col_guide:
+        #     # 1. The Main Point (Visible)
+        #     st.markdown("""
+        #     <div style="background-color: #f0f9ff; padding: 12px; border-radius: 10px; border: 1px solid #bae6fd; color: #000000; margin-bottom: 5px;">
+        #         <h4 style="color: #0369a1; text-align: right; margin: 0 0 5px 0;">بدعنوانی سے بچاؤ 🛡️</h4>
+        #         <p dir="rtl" style="text-align: right; font-size: 0.85rem; margin: 0; line-height: 1.4;">
+        #             🛑 <b>نقدی نہ دیں:</b> کوئی بھی ٹریفک وارڈن موقع پر نقد جرمانہ لینے کا مجاز نہیں ہے۔ ہمیشہ بینک چالان طلب کریں۔
+        #         </p>
+        #     </div>
+        #     """, unsafe_allow_html=True)
+
+        #     # 2. Additional Points (Hidden in Expander)
+        #     with st.expander("مزید قانونی معلومات"):
+        #         st.markdown("""
+        #         <div dir="rtl" style="text-align: right; color: #000000; font-size: 0.82rem; line-height: 1.6;">
+        #             <ul style="list-style-type: none; padding-right: 0;">
+        #                 <li>🪪 <b>شناخت:</b> آپ کو افسر کا نام اور بیلٹ نمبر پوچھنے کا پورا حق ہے۔</li>
+        #                 <hr style="margin: 8px 0; border-top: 1px solid #eee;">
+        #                 <li>📱 <b>ویڈیو:</b> آپ پبلک جگہ پر کارروائی کی ویڈیو بنا سکتے ہیں۔</li>
+        #                 <hr style="margin: 8px 0; border-top: 1px solid #eee;">
+        #                 <li>📝 <b>دستخط:</b> اختلاف کی صورت میں چالان پر 'Disputed' لکھ سکتے ہیں۔</li>
+        #                 <hr style="margin: 8px 0; border-top: 1px solid #eee;">
+        #                 <li>📞 <b>شکایات:</b> رشوت مانگنے پر <b>15</b> پر کال کریں۔</li>
+        #             </ul>
+        #             <div style="background-color: #e0f2fe; padding: 8px; border-radius: 5px; margin-top: 5px; font-size: 0.75rem;">
+        #                 <b>قانونی مشورہ:</b> ہمیشہ اصل کاغذات ساتھ رکھیں تاکہ تنگ کرنے کا موقع نہ ملے۔
+        #             </div>
+        #         </div>
+        #         """, unsafe_allow_html=True)
 
         # Chat Input - Placed globally at the bottom
         

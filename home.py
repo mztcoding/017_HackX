@@ -457,7 +457,7 @@ def show_home():
             </a>
             <a href="?page=main&nav=2" target="_self" class="feature-card">
                 <span class="feature-icon">✅</span>
-                <h3 class="feature-title">Challan Challan Analyzer</h3>
+                <h3 class="feature-title">Challan Analyzer</h3>
                 <p class="feature-desc">Instantly verify if your traffic challan is legitimate and issued correctly.</p>
             </a>
             <a href="?page=main&nav=3" target="_self" class="feature-card">
